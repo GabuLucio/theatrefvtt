@@ -160,7 +160,7 @@ Hooks.on("preCreateChatMessage", function (chatMessage, data) {
     if ($(theatre.theatreChatCover).hasClass("theatre-control-chat-cover-ooc")) {
         const user = game.users.get(chatMessage.user.id);
         chatData.speaker.alias = user.name;
-        if (foundry.utils.isNewerVersion(game.version, 12)) {
+        if (foundry.utils.isNewerVersion(game.version, 11)) {
             chatData.style = CONST.CHAT_MESSAGE_STYLES.OOC;
         } else {
             chatData.type = CONST.CHAT_MESSAGE_TYPES.OOC;
@@ -184,7 +184,7 @@ Hooks.on("preCreateChatMessage", function (chatMessage, data) {
             Logger.debug("name is %s", name);
             chatData.speaker.alias = name;
             //chatData.flags.theatreColor = theatreColor;
-            if (foundry.utils.isNewerVersion(game.version, 12)) {
+            if (foundry.utils.isNewerVersion(game.version, 11)) {
                 chatData.style = CONST.CHAT_MESSAGE_STYLES.IC;
             } else {
                 chatData.type = CONST.CHAT_MESSAGE_TYPES.IC;
@@ -202,7 +202,7 @@ Hooks.on("preCreateChatMessage", function (chatMessage, data) {
             let theatreColor = Theatre.instance.getPlayerFlashColor(chatData.user, insert.textColor);
             chatData.speaker.alias = name;
             //chatData.flags.theatreColor = theatreColor;
-            if (foundry.utils.isNewerVersion(game.version, 12)) {
+            if (foundry.utils.isNewerVersion(game.version, 11)) {
                 chatData.style = CONST.CHAT_MESSAGE_STYLES.IC;
             } else {
                 chatData.type = CONST.CHAT_MESSAGE_TYPES.IC;
@@ -216,7 +216,7 @@ Hooks.on("preCreateChatMessage", function (chatMessage, data) {
             }
         } else if (Theatre.instance.speakingAs == CONSTANTS.NARRATOR) {
             chatData.speaker.alias = game.i18n.localize("Theatre.UI.Chat.Narrator");
-            if (foundry.utils.isNewerVersion(game.version, 12)) {
+            if (foundry.utils.isNewerVersion(game.version, 11)) {
                 chatData.style = CONST.CHAT_MESSAGE_STYLES.IC;
             } else {
                 chatData.type = CONST.CHAT_MESSAGE_TYPES.IC;
@@ -264,7 +264,7 @@ Hooks.on("createChatMessage", function (chatEntity, _, userId) {
 
     // slash commands are pass through
     let chatData = chatEntity;
-    const isOCC = foundry.utils.isNewerVersion(game.version, 12)
+    const isOCC = foundry.utils.isNewerVersion(game.version, 11)
         ? chatData.style === CONST.CHAT_MESSAGE_STYLES.OOC
         : chatData.type === CONST.CHAT_MESSAGE_TYPES.OOC;
     if (

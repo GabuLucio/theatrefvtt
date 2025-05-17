@@ -1,3 +1,8 @@
+### 2.9.2
+
+- Updated compatibility to support Foundry VTT v13
+- Fixed version checks to properly handle Foundry VTT v13 chat message style/type
+
 ### 2.9.0
 
 - Add integration with socketlib (as optional)
