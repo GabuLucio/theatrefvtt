@@ -184,9 +184,9 @@ export class Theatre {
         this.theatreNarrator.style.top = `calc(${this.settings.narrHeight} - 50px)`;
         // set z-index class for other UI elements
         const uiAbove = game.settings.get(CONSTANTS.MODULE_ID, "showUIAboveStage");
-        const leftAbove = uiAbove == "left" || uiAbove == "both";
+        const leftAbove = uiAbove === "left" || uiAbove === "both";
         if (leftAbove) document.getElementById("ui-left").classList.add("z-higher");
-        const middleAbove = uiAbove == "middle" || uiAbove == "both";
+        const middleAbove = uiAbove === "middle" || uiAbove === "both";
         if (middleAbove) document.getElementById("ui-middle").classList.add("z-higher");
 
         // set dock canvas hard dimensions after CSS has caclulated it
@@ -194,8 +194,26 @@ export class Theatre {
         /**
          * Theatre Chat Controls
          */
-        let chatControls = document.getElementById("chat-controls");
-        let controlButtons = chatControls.getElementsByClassName("control-buttons")[0];
+        // Foundry V13 (and some late V12 builds) reorganised the chat sidebar header, so the
+        // historical #chat-controls ID may no longer be present. Attempt a series of fallbacks
+        // to locate the element that contains the chat header controls.
+        let chatControls =
+            document.getElementById("chat-controls") || // legacy (≤ V12)
+            document.querySelector("#chat .chat-controls") || // V13 sidebar HTML
+            document.querySelector(".sidebar-tab.chat .chat-controls") || // popped-out chat / stricter selector
+            document.querySelector(".chat-controls"); // final generic fallback
+
+        if (!chatControls) {
+            Logger.error(
+                "[Theatre Inserts] Unable to locate chat-controls container in the current Foundry UI. Chat based Theatre controls will not be initialised.",
+                true,
+            );
+            return; // Abort additional UI injection – rest of the module will still load.
+        }
+
+        // The internal buttons container also changed to use querySelector over class collection.
+        let controlButtons = chatControls.querySelector(".control-buttons");
+
         let chatForm = document.getElementById("chat-form");
         let chatMessage = document.getElementById("chat-message");
 
@@ -541,27 +559,27 @@ export class Theatre {
         let insertEmote = this._getEmoteFromInsert(insert);
         let insertTextFlyin = insert
             ? this._getTextFlyinFromInsert(insert)
-            : this.speakingAs == CONSTANTS.NARRATOR
+            : this.speakingAs === CONSTANTS.NARRATOR
               ? this.theatreNarrator.getAttribute("textflyin")
               : "typewriter";
         let insertTextStanding = insert
             ? this._getTextStandingFromInsert(insert)
-            : this.speakingAs == CONSTANTS.NARRATOR
+            : this.speakingAs === CONSTANTS.NARRATOR
               ? this.theatreNarrator.getAttribute("textstanding")
               : "none";
         let insertTextFont = insert
             ? this._getTextFontFromInsert(insert)
-            : this.speakingAs == CONSTANTS.NARRATOR
+            : this.speakingAs === CONSTANTS.NARRATOR
               ? this.theatreNarrator.getAttribute("textfont")
               : null;
         let insertTextSize = insert
             ? this._getTextSizeFromInsert(insert)
-            : this.speakingAs == CONSTANTS.NARRATOR
+            : this.speakingAs === CONSTANTS.NARRATOR
               ? this.theatreNarrator.getAttribute("textsize")
               : null;
         let insertTextColor = insert
             ? this._getTextColorFromInsert(insert)
-            : this.speakingAs == CONSTANTS.NARRATOR
+            : this.speakingAs === CONSTANTS.NARRATOR
               ? this.theatreNarrator.getAttribute("textcolor")
               : null;
 
@@ -669,7 +687,7 @@ export class Theatre {
 
         // If there's a GM, request to resync from them
         let data = {};
-        if (type == "players" && game.user.isGM) {
+        if (type === "players" && game.user.isGM) {
             data.insertdata = this._buildResyncData();
             data.narrator = this.isNarratorActive;
         }
@@ -681,7 +699,7 @@ export class Theatre {
             data: data,
         });
 
-        if (type != "players") {
+        if (type !== "players") {
             this.resync.type = type;
             this.resync.timeoutId = window.setTimeout(() => {
                 Logger.log("RESYNC REQUEST TIMEOUT");
@@ -708,12 +726,12 @@ export class Theatre {
     _processResyncRequest(type, senderId, data) {
         Logger.debug("Processing resync request");
         // If the dock is not active, no need to send anything
-        if (type == "any" && this.dockActive <= 0 && !this.isNarratorActive) {
+        if (type === "any" && this.dockActive <= 0 && !this.isNarratorActive) {
             Logger.warn("OUR DOCK IS NOT ACTIVE, Not responding to reqresync");
             return;
-        } else if (type == "gm" && !game.user.isGM) {
+        } else if (type === "gm" && !game.user.isGM) {
             return;
-        } else if (type == "players") {
+        } else if (type === "players") {
             // clear our theatre
             for (let insert of this.portraitDocks) this.removeInsertById(insert.imgId, true);
             // process this as if it were a resyncevent
@@ -742,7 +760,7 @@ export class Theatre {
     _processResyncEvent(type, senderId, data) {
         Logger.debug("Processing resync event %s :", type, data, game.users.get(senderId));
         // if we're resyncing and it's us that's the target
-        if (this.resync.timeoutId && (data.targetid == game.user.id || ("gm" == this.resync.type) == type)) {
+        if (this.resync.timeoutId && (data.targetid === game.user.id || ("gm" === this.resync.type) === type)) {
             // drop all other resync responses, first come, first process
             window.clearTimeout(this.resync.timeoutId);
             this.resync.timeoutId = null;
@@ -750,7 +768,7 @@ export class Theatre {
             // clear our theatre
             for (let insert of this.portraitDocks) this.removeInsertById(insert.imgId, true);
 
-            if (type == "gm") {
+            if (type === "gm") {
                 Logger.info(game.i18n.localize("Theatre.UI.Notification.ResyncGM"), true);
             } else {
                 Logger.info(
@@ -824,7 +842,7 @@ export class Theatre {
                             },
                             true,
                         );
-                } else if (toInject.length == 1) {
+                } else if (toInject.length === 1) {
                     await this.injectLeftPortrait(
                         toInject[0].params.src,
                         toInject[0].params.name,
@@ -854,7 +872,7 @@ export class Theatre {
 								this._mirrorInsert(port,true);
 							*/
                             Logger.debug("Mirror ? %s : %s", dat.position.mirror, insert.mirrored);
-                            if (Boolean(dat.position.mirror) != insert.mirrored) {
+                            if (Boolean(dat.position.mirror) !== insert.mirrored) {
                                 Logger.debug("no match!");
                                 insert.mirrored = Boolean(dat.position.mirror);
                             }
@@ -960,7 +978,7 @@ export class Theatre {
                 if (insert) {
                     // apply mirror state
                     Logger.debug("mirroring desired: %s , current mirror %s", data.position.mirror, insert.mirrored);
-                    if (Boolean(data.position.mirror) != insert.mirrored) {
+                    if (Boolean(data.position.mirror) !== insert.mirrored) {
                         insert.mirrored = data.position.mirror;
                     }
                     // apply positioning data
@@ -1010,7 +1028,7 @@ export class Theatre {
                 this.setUserEmote(senderId, data.insertid, "textfont", textFont, true);
                 this.setUserEmote(senderId, data.insertid, "textsize", textSize, true);
                 this.setUserEmote(senderId, data.insertid, "textcolor", textColor, true);
-                if (data.insertid == this.speakingAs) {
+                if (data.insertid === this.speakingAs) {
                     this.renderEmoteMenu();
                 }
                 break;
@@ -1026,7 +1044,7 @@ export class Theatre {
                 insertEmote = this._getEmoteFromInsert(insert);
                 render = false;
 
-                if (insertEmote == data.emote) render = true;
+                if (insertEmote === data.emote) render = true;
                 else if (!data.emote) render = true;
 
                 const resources = await this._AddTextureResource(
@@ -1054,7 +1072,7 @@ export class Theatre {
 
                     this._repositionInsertElements(insert);
 
-                    if (data.insertid == this.speakingAs);
+                    if (data.insertid === this.speakingAs);
                     this.renderEmoteMenu();
                     if (!this.rendering) this._renderTheatre(performance.now());
                 }
@@ -1071,7 +1089,7 @@ export class Theatre {
                 insertEmote = this._getEmoteFromInsert(insert);
                 render = false;
 
-                if (insertEmote == data.emote) render = true;
+                if (insertEmote === data.emote) render = true;
                 else if (!data.emote) render = true;
 
                 const resources = await this._AddAllTextureResources(
@@ -1100,7 +1118,7 @@ export class Theatre {
 
                     this._repositionInsertElements(insert);
 
-                    if (data.insertid == this.speakingAs);
+                    if (data.insertid === this.speakingAs);
                     this.renderEmoteMenu();
                     if (!this.rendering) this._renderTheatre(performance.now());
                 }
@@ -1164,7 +1182,7 @@ export class Theatre {
         this.setUserEmote(userId, data.insertid, "textsize", textSize, true);
         this.setUserEmote(userId, data.insertid, "textcolor", textColor, true);
         // if the insertid is our speaking id, update our emote menu
-        if (data.insertid == this.speakingAs) this.renderEmoteMenu();
+        if (data.insertid === this.speakingAs) this.renderEmoteMenu();
     }
 
     /**
@@ -1290,7 +1308,7 @@ export class Theatre {
                 if (insert) {
                     if (value) insert.textFont = value;
                     else insert.textFont = null;
-                } else if (theatreId == CONSTANTS.NARRATOR) {
+                } else if (theatreId === CONSTANTS.NARRATOR) {
                     if (value) this.theatreNarrator.setAttribute("textfont", value);
                     else this.theatreNarrator.removeAttribute("textfont", value);
                 } else {
@@ -1301,6 +1319,7 @@ export class Theatre {
                 if (insert) {
                     if (value) insert.textSize = value;
                     else insert.textSize = null;
+                } else if (theatreId === CONSTANTS.NARRATOR) {
                 } else if (theatreId == CONSTANTS.NARRATOR) {
                     if (value) this.theatreNarrator.setAttribute("textsize", value);
                     else this.theatreNarrator.removeAttribute("textsize", value);
@@ -2123,8 +2142,8 @@ export class Theatre {
             $("#hotbar").removeClass("theatre-invisible");
             const customSelectors = game.settings.get(CONSTANTS.MODULE_ID, "suppressCustomCss");
             if (customSelectors) {
-                const selectors = customSelectors.split(";").map(selector => selector.trim());
-                selectors.forEach(selector => {
+                const selectors = customSelectors.split(";").map((selector) => selector.trim());
+                selectors.forEach((selector) => {
                     $(selector).removeClass("theatre-invisible");
                 });
             }
